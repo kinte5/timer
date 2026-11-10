@@ -365,9 +365,12 @@ async function scanPhoto(file) {
       const cropWidth = Math.round(image.width * 0.84);
       const cropHeight = Math.round(image.height * 0.66);
       boardImage = document.createElement("canvas");
-      boardImage.width = cropWidth;
-      boardImage.height = cropHeight;
-      boardImage.getContext("2d").drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+      boardImage.width = cropWidth * 2;
+      boardImage.height = cropHeight * 2;
+      const context = boardImage.getContext("2d");
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      context.drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, boardImage.width, boardImage.height);
       image.close();
     } catch (error) {
       console.error("No se pudo recortar la foto; se intentará leer la imagen completa:", error);
@@ -398,6 +401,7 @@ async function scanPhoto(file) {
         if (progress.status === "recognizing text") showStatus(`Leyendo el tablero… ${Math.round(progress.progress * 100)}%`, false, true, true);
       }
     });
+    await worker.setParameters({ tessedit_pageseg_mode: "6" });
     let result = await worker.recognize(boardImage);
     let recognized = parseOcr(result.data.text);
     await worker.setParameters({ tessedit_pageseg_mode: "11" });
