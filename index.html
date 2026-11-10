@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#f5f6f2">
+    <meta name="description" content="Registra el tiempo de uso de las máquinas de tu taller y exporta informes.">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./icon.svg">
+    <link rel="stylesheet" href="./styles.css">
+    <title>Ritmo — Control de máquinas</title>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Ritmo, inicio">
+          <span class="brand-mark" aria-hidden="true">r.</span>
+          <span>ritmo<span class="brand-period">.</span></span>
+        </a>
+        <span class="local-badge"><span></span> Guardado en este dispositivo</span>
+      </header>
+
+      <section class="intro">
+        <div>
+          <p class="eyebrow">CONTROL DE TALLER</p>
+          <h1>El ritmo de<br><span>tu operación.</span></h1>
+          <p class="intro-copy">Registra las lecturas del tablero y descubre cuánto trabaja cada máquina de tus 24 horas.</p>
+        </div>
+        <div class="intro-stamp" aria-hidden="true">
+          <span>24</span>
+          <small>HORAS<br>AL DÍA</small>
+        </div>
+      </section>
+
+      <nav class="tabs" aria-label="Secciones">
+        <button class="tab active" type="button" data-view="registro">Registro</button>
+        <button class="tab" type="button" data-view="historial">Historial <span id="history-count" class="tab-count">0</span></button>
+      </nav>
+
+      <section id="registro-view" class="view">
+        <section class="capture-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">NUEVA LECTURA</p>
+              <h2>¿Qué marca el tablero?</h2>
+            </div>
+            <span class="step-number">01 <i>/ 02</i></span>
+          </div>
+
+          <div class="capture-row">
+            <div class="date-field">
+              <span>Fecha y hora de la foto</span>
+              <output id="reading-datetime" class="datetime-display">Se asignará automáticamente al agregar una foto</output>
+            </div>
+            <label class="photo-button" for="photo-input">
+              <span class="camera-icon" aria-hidden="true">＋</span>
+              <span id="photo-button-label">Tomar foto</span>
+              <input id="photo-input" type="file" accept="image/*" capture="environment">
+            </label>
+          </div>
+          <p class="privacy-note"><span aria-hidden="true">↳</span> La fecha y hora no se pueden editar. Usamos la captura de la foto o, si no está disponible, la fecha del archivo o la hora de adjunto. La foto se procesa en tu dispositivo.</p>
+
+          <div id="scan-status" class="scan-status" role="status" aria-live="polite" hidden>
+            <span class="status-spinner" aria-hidden="true"></span>
+            <span id="scan-message"></span>
+          </div>
+
+          <div id="photo-strip" class="photo-strip" aria-label="Fotos de esta lectura"></div>
+        </section>
+
+        <section class="readings-section">
+          <div class="section-heading readings-heading">
+            <div>
+              <p class="eyebrow">REVISA ANTES DE GUARDAR</p>
+              <h2>Lectura por máquina</h2>
+            </div>
+            <button id="add-machine-button" class="text-button" type="button">＋ Máquina</button>
+          </div>
+          <p class="helper-copy">Verifica los valores que leyó la foto. Puedes corregirlos manualmente.</p>
+
+          <div class="table-wrap">
+            <div class="machine-table table-header" aria-hidden="true">
+              <span>Máquina</span><span>Tiempo acumulado</span><span></span>
+            </div>
+            <div id="machine-rows"></div>
+          </div>
+
+          <div class="save-row">
+            <p id="save-hint" class="save-hint">Agrega una foto para comenzar.</p>
+            <button id="save-button" class="primary-button" type="button" disabled>
+              Guardar lectura <span aria-hidden="true">↗</span>
+            </button>
+          </div>
+        </section>
+
+        <aside class="how-card">
+          <span class="how-icon" aria-hidden="true">↗</span>
+          <div>
+            <strong>Una foto cada día, una historia más clara.</strong>
+            <p>Comparamos cada contador con la lectura anterior para calcular las horas usadas.</p>
+          </div>
+        </aside>
+      </section>
+
+      <section id="historial-view" class="view" hidden>
+        <section class="history-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">TUS DATOS</p>
+              <h2>Historial de lecturas</h2>
+            </div>
+            <span class="step-number">02 <i>/ 02</i></span>
+          </div>
+          <div class="history-tools">
+            <p id="history-summary">Tus lecturas aparecerán aquí.</p>
+            <div class="history-actions">
+              <button id="clear-history-button" class="clear-history-button" type="button" disabled>Borrar historial</button>
+              <button id="export-button" class="export-button" type="button" disabled><span aria-hidden="true">↓</span> Descargar Excel</button>
+            </div>
+          </div>
+          <p id="history-error" class="history-error" role="alert" hidden></p>
+          <div id="history-list" class="history-list"></div>
+          <div id="empty-history" class="empty-state">
+            <span aria-hidden="true">◷</span>
+            <strong>Aún no hay lecturas</strong>
+            <p>Toma una foto del tablero para empezar a medir el uso.</p>
+          </div>
+        </section>
+        <p class="history-footnote">El uso es la diferencia desde la lectura anterior; con fotos diarias se calcula día a día. Si faltan días, el total corresponde a todo el intervalo. Si el contador disminuye, se toma como un reinicio.</p>
+      </section>
+
+      <footer class="footer"><span>RITMO / TALLER</span><span>Hecho para trabajar mejor.</span></footer>
+    </main>
+    <script src="./app.js"></script>
+    <script>
+      if ("serviceWorker" in navigator && location.protocol !== "file:") {
+        window.addEventListener("load", () => navigator.serviceWorker.register("./sw.js").catch(error => console.error("No se pudo registrar la app sin conexión:", error)));
+      }
+    </script>
+  </body>
+</html>
