@@ -52,11 +52,18 @@
               <span>Fecha y hora de la foto</span>
               <output id="reading-datetime" class="datetime-display">Se asignará automáticamente al agregar una foto</output>
             </div>
-            <label class="photo-button" for="photo-input">
-              <span class="camera-icon" aria-hidden="true">＋</span>
-              <span id="photo-button-label">Tomar foto</span>
-              <input id="photo-input" type="file" accept="image/*" capture="environment">
-            </label>
+            <div class="photo-actions">
+              <label class="photo-button" for="camera-input">
+                <span class="camera-icon" aria-hidden="true">＋</span>
+                <span>Tomar foto</span>
+                <input id="camera-input" type="file" accept="image/*" capture="environment">
+              </label>
+              <label class="photo-button photo-library-button" for="photo-input">
+                <span class="camera-icon" aria-hidden="true">↥</span>
+                <span>Fototeca</span>
+                <input id="photo-input" type="file" accept="image/*">
+              </label>
+            </div>
           </div>
           <p class="privacy-note"><span aria-hidden="true">↳</span> La fecha y hora no se pueden editar. Usamos la captura de la foto o, si no está disponible, la fecha del archivo o la hora de adjunto. La foto se procesa en tu dispositivo.</p>
 

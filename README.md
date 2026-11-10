@@ -7,7 +7,7 @@ App web instalable para registrar las lecturas acumuladas del tablero del taller
 1. Publica estos archivos en un sitio estático con HTTPS.
 2. Abre la dirección en Safari del iPhone.
 3. Pulsa **Compartir → Añadir a pantalla de inicio**.
-4. En **Registro**, toma o adjunta fotos de todas las páginas del tablero. La fecha y la hora se asignan automáticamente con la hora de captura guardada en la foto; si la imagen no tiene esos datos, se usa la fecha del archivo o la hora de adjunto. No se pueden editar. Revisa y completa cualquier campo que el lector no haya detectado; luego guarda.
+4. En **Registro**, usa **Tomar foto** o **Fototeca** para agregar fotos de todas las páginas del tablero. La fecha y la hora se asignan automáticamente con la hora de captura guardada en la foto; si la imagen no tiene esos datos, se usa la fecha del archivo o la hora de adjunto. No se pueden editar. Revisa y completa cualquier campo que el lector no haya detectado; luego guarda.
 5. En **Historial**, descarga el informe `.xlsx` para abrirlo en Excel o compartirlo.
 6. Usa **Borrar historial** para eliminar del dispositivo todas las lecturas guardadas; la app pide confirmación antes de hacerlo.
 

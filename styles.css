@@ -49,7 +49,8 @@ h1 span { color: var(--green); }
 .date-field { flex: 1; display: grid; gap: 7px; }
 .date-field span { color: #77827a; font-size: 10px; }
 .datetime-display { border: 1px solid var(--line); border-radius: 7px; color: #36443b; min-height: 43px; padding: 0 11px; background: #fff; display: flex; align-items: center; font: 11px "DM Mono", monospace; }
-.photo-button { height: 43px; padding: 0 15px; border: 1px solid #dce5da; border-radius: 7px; background: var(--soft-green); color: var(--green); display: inline-flex; align-items: center; gap: 8px; font-weight: 700; font-size: 11px; white-space: nowrap; }
+.photo-actions { display: flex; gap: 7px; }
+.photo-button { height: 43px; padding: 0 12px; border: 1px solid #dce5da; border-radius: 7px; background: var(--soft-green); color: var(--green); display: inline-flex; align-items: center; gap: 7px; font-weight: 700; font-size: 11px; white-space: nowrap; cursor: pointer; }
 .photo-button input { display: none; }
 .camera-icon { font-size: 19px; line-height: 1; font-weight: 400; }
 .privacy-note { color: #98a198; font-size: 10px; margin: 12px 0 0; }
@@ -57,6 +58,7 @@ h1 span { color: var(--green); }
 .scan-status { color: #56665a; background: #f4f8f2; border-radius: 7px; padding: 10px 12px; display: flex; gap: 9px; align-items: center; font-size: 11px; margin-top: 14px; }
 .scan-status[hidden] { display: none; }
 .status-spinner { width: 13px; height: 13px; border: 2px solid #cbd9c7; border-top-color: var(--green); border-radius: 50%; animation: spin .8s linear infinite; }
+.scan-status:not(.loading) .status-spinner { display: none; }
 .scan-status.error { color: #a54b37; background: #fff2ed; }
 .scan-status.error .status-spinner { display: none; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -131,6 +133,9 @@ h1 span { color: var(--green); }
   .intro-stamp span { font-size: 31px; }
   .intro-stamp small { font-size: 7px; }
   .capture-card, .readings-section, .history-card { padding-left: 17px; padding-right: 17px; }
+  .capture-row { align-items: stretch; flex-direction: column; }
+  .photo-actions { width: 100%; }
+  .photo-button { flex: 1; justify-content: center; padding: 0 8px; }
   .machine-table { grid-template-columns: minmax(82px, .75fr) minmax(201px, 1.5fr) 18px; gap: 5px; }
   .duration-inputs { gap: 3px; }
   .duration-field { gap: 2px; }

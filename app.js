@@ -9,7 +9,7 @@ const state = { readings: loadReadings(), draft: [], photos: [], recordedAt: nul
 const elements = {
   dateTime: document.querySelector("#reading-datetime"),
   photo: document.querySelector("#photo-input"),
-  photoLabel: document.querySelector("#photo-button-label"),
+  camera: document.querySelector("#camera-input"),
   photoStrip: document.querySelector("#photo-strip"),
   rows: document.querySelector("#machine-rows"),
   status: document.querySelector("#scan-status"),
@@ -151,11 +151,11 @@ function saveReadings() {
   return true;
 }
 
-function showStatus(message, isError = false, visible = true) {
+function showStatus(message, isError = false, visible = true, loading = false) {
   elements.status.hidden = !visible;
   elements.status.classList.toggle("error", isError);
+  elements.status.classList.toggle("loading", loading);
   elements.message.textContent = message;
-  elements.status.querySelector(".status-spinner").style.display = isError ? "none" : "";
 }
 
 function makeMachine(name = "", seconds = null) {
@@ -293,22 +293,6 @@ function parseOcr(text) {
   return parsed;
 }
 
-function mergeOcrReadings(primary, secondary) {
-  const readings = new Map(primary.map(machine => [machine.name.toLocaleLowerCase("es"), { ...machine }]));
-  secondary.forEach(machine => {
-    const key = machine.name.toLocaleLowerCase("es");
-    const existing = readings.get(key);
-    if (!existing) {
-      readings.set(key, { ...machine });
-      return;
-    }
-    ["days", "hours", "minutes", "seconds"].forEach(field => {
-      if (existing[field] === "" && machine[field] !== "") existing[field] = machine[field];
-    });
-  });
-  return [...readings.values()];
-}
-
 function mergeDraft(recognized) {
   recognized.forEach(machine => {
     const existing = state.draft.find(item => item.name.toLocaleLowerCase("es") === machine.name.toLocaleLowerCase("es"));
@@ -340,85 +324,92 @@ async function scanPhoto(file) {
     showStatus("Elige un archivo de imagen válido.", true);
     return;
   }
+  if (state.busy) return;
   state.busy = true;
   updateSaveButton();
-  showStatus("Preparando el lector de texto. La primera vez puede tardar un momento.");
-  const imageUrl = URL.createObjectURL(file);
-  const photoTime = await readPhotoTimestamp(file);
-  const photo = { url: imageUrl, ...photoTime };
-  if (!state.recordedAt) {
-    state.recordedAt = photo.timestamp;
-    elements.dateTime.textContent = `${displayDateTime(photo.timestamp)} · ${photo.source}`;
-  }
-  let boardImage;
+  elements.camera.disabled = true;
+  elements.photo.disabled = true;
+  showStatus("Preparando el lector de texto. La primera vez puede tardar un momento.", false, true, true);
+  let worker;
   try {
-    const image = await createImageBitmap(file);
-    const cropX = Math.round(image.width * 0.14);
-    const cropY = Math.round(image.height * 0.22);
-    const cropWidth = Math.round(image.width * 0.84);
-    const cropHeight = Math.round(image.height * 0.66);
-    boardImage = document.createElement("canvas");
-    boardImage.width = cropWidth;
-    boardImage.height = cropHeight;
-    boardImage.getContext("2d").drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
-    image.close();
-  } catch (error) {
-    console.error("No se pudo recortar la foto; se intentará leer la imagen completa:", error);
-    boardImage = file;
-  }
-  const item = document.createElement("div");
-  item.className = "photo-item";
-  const thumbnail = document.createElement("img");
-  thumbnail.className = "photo-thumb";
-  thumbnail.src = imageUrl;
-  thumbnail.alt = "Foto agregada para esta lectura";
-  const details = document.createElement("span");
-  details.className = "photo-time";
-  const time = document.createElement("strong");
-  time.textContent = displayDateTime(photo.timestamp);
-  const source = document.createElement("small");
-  source.textContent = photo.source;
-  details.append(time, source);
-  item.append(thumbnail, details);
-  elements.photoStrip.append(item);
-  state.photos.push(photo);
-  elements.photoLabel.textContent = "Agregar otra foto";
-  try {
+    const imageUrl = URL.createObjectURL(file);
+    const photoTime = await readPhotoTimestamp(file);
+    const photo = { url: imageUrl, ...photoTime };
+    if (!state.recordedAt) {
+      state.recordedAt = photo.timestamp;
+      elements.dateTime.textContent = `${displayDateTime(photo.timestamp)} · ${photo.source}`;
+    }
+    let boardImage;
+    try {
+      const image = await createImageBitmap(file);
+      const cropX = Math.round(image.width * 0.14);
+      const cropY = Math.round(image.height * 0.22);
+      const cropWidth = Math.round(image.width * 0.84);
+      const cropHeight = Math.round(image.height * 0.66);
+      boardImage = document.createElement("canvas");
+      boardImage.width = cropWidth;
+      boardImage.height = cropHeight;
+      boardImage.getContext("2d").drawImage(image, cropX, cropY, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+      image.close();
+    } catch (error) {
+      console.error("No se pudo recortar la foto; se intentará leer la imagen completa:", error);
+      boardImage = file;
+    }
+    const item = document.createElement("div");
+    item.className = "photo-item";
+    const thumbnail = document.createElement("img");
+    thumbnail.className = "photo-thumb";
+    thumbnail.src = imageUrl;
+    thumbnail.alt = "Foto agregada para esta lectura";
+    const details = document.createElement("span");
+    details.className = "photo-time";
+    const time = document.createElement("strong");
+    time.textContent = displayDateTime(photo.timestamp);
+    const source = document.createElement("small");
+    source.textContent = photo.source;
+    details.append(time, source);
+    item.append(thumbnail, details);
+    elements.photoStrip.append(item);
+    state.photos.push(photo);
     const Tesseract = await loadOcr();
-    const worker = await Tesseract.createWorker("spa", 1, {
+    worker = await Tesseract.createWorker("spa", 1, {
       workerPath: "https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/worker.min.js",
       corePath: "https://cdn.jsdelivr.net/npm/tesseract.js-core@5",
       langPath: "https://tessdata.projectnaptha.com/4.0.0",
       logger: progress => {
-        if (progress.status === "recognizing text") showStatus(`Leyendo el tablero… ${Math.round(progress.progress * 100)}%`);
+        if (progress.status === "recognizing text") showStatus(`Leyendo el tablero… ${Math.round(progress.progress * 100)}%`, false, true, true);
       }
     });
-    try {
-      let result = await worker.recognize(boardImage);
-      let recognized = parseOcr(result.data.text);
+    let result = await worker.recognize(boardImage);
+    let recognized = parseOcr(result.data.text);
+    if (!recognized.length) {
       await worker.setParameters({ tessedit_pageseg_mode: "11" });
       result = await worker.recognize(boardImage);
-      recognized = mergeOcrReadings(recognized, parseOcr(result.data.text));
+      recognized = parseOcr(result.data.text);
       if (!recognized.length && boardImage !== file) {
         result = await worker.recognize(file);
         recognized = parseOcr(result.data.text);
       }
-      if (recognized.length) {
-        mergeDraft(recognized);
-        renderRows();
-        showStatus(`Se reconocieron ${recognized.length} ${recognized.length === 1 ? "máquina" : "máquinas"}. Revisa los valores y agrega la otra página si hace falta.`, false, true);
-      } else {
-        showStatus("No se reconocieron los contadores. Prueba con una foto más de frente y con mejor luz; también puedes ingresar los datos manualmente.", true);
-      }
-    } finally {
-      await worker.terminate();
+    }
+    if (recognized.length) {
+      mergeDraft(recognized);
+      renderRows();
+      showStatus(`Se reconocieron ${recognized.length} ${recognized.length === 1 ? "máquina" : "máquinas"}. Completa los campos vacíos y agrega otra foto si hace falta.`);
+    } else {
+      showStatus("No se reconocieron los contadores. Prueba con una foto más de frente y con mejor luz; también puedes ingresar los datos manualmente.", true);
     }
   } catch (error) {
     showStatus(error.message || "No se pudo leer la foto. Inténtalo otra vez o ingresa los valores manualmente.", true);
     console.error("Error al procesar la foto:", error);
   } finally {
+    if (worker) {
+      worker.terminate().catch(error => console.error("No se pudo cerrar el lector de texto:", error));
+    }
     state.busy = false;
+    elements.camera.disabled = false;
+    elements.photo.disabled = false;
     updateSaveButton();
+    elements.camera.value = "";
     elements.photo.value = "";
   }
 }
@@ -550,7 +541,6 @@ function saveDraft() {
   state.recordedAt = null;
   elements.dateTime.textContent = "Se asignará automáticamente al agregar una foto";
   elements.photoStrip.replaceChildren();
-  elements.photoLabel.textContent = "Tomar foto";
   renderRows();
   renderHistory();
   showStatus("Lectura guardada correctamente.", false, true);
@@ -615,10 +605,10 @@ document.querySelectorAll(".tab").forEach(tab => tab.addEventListener("click", (
   document.querySelectorAll(".view").forEach(view => { view.hidden = view.id !== `${tab.dataset.view}-view`; });
 }));
 
-elements.photo.addEventListener("change", event => {
+[elements.camera, elements.photo].forEach(input => input.addEventListener("change", event => {
   const [file] = event.target.files || [];
   if (file) scanPhoto(file);
-});
+}));
 elements.save.addEventListener("click", saveDraft);
 elements.export.addEventListener("click", exportExcel);
 elements.clearHistory.addEventListener("click", clearHistory);
