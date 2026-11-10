@@ -293,6 +293,22 @@ function parseOcr(text) {
   return parsed;
 }
 
+function mergeOcrReadings(primary, secondary) {
+  const readings = new Map(primary.map(machine => [machine.name.toLocaleLowerCase("es"), { ...machine }]));
+  secondary.forEach(machine => {
+    const key = machine.name.toLocaleLowerCase("es");
+    const existing = readings.get(key);
+    if (!existing) {
+      readings.set(key, { ...machine });
+      return;
+    }
+    ["days", "hours", "minutes", "seconds"].forEach(field => {
+      if (existing[field] === "" && machine[field] !== "") existing[field] = machine[field];
+    });
+  });
+  return [...readings.values()];
+}
+
 function mergeDraft(recognized) {
   recognized.forEach(machine => {
     const existing = state.draft.find(item => item.name.toLocaleLowerCase("es") === machine.name.toLocaleLowerCase("es"));
@@ -382,14 +398,12 @@ async function scanPhoto(file) {
     });
     let result = await worker.recognize(boardImage);
     let recognized = parseOcr(result.data.text);
-    if (!recognized.length) {
-      await worker.setParameters({ tessedit_pageseg_mode: "11" });
-      result = await worker.recognize(boardImage);
+    await worker.setParameters({ tessedit_pageseg_mode: "11" });
+    result = await worker.recognize(boardImage);
+    recognized = mergeOcrReadings(recognized, parseOcr(result.data.text));
+    if (!recognized.length && boardImage !== file) {
+      result = await worker.recognize(file);
       recognized = parseOcr(result.data.text);
-      if (!recognized.length && boardImage !== file) {
-        result = await worker.recognize(file);
-        recognized = parseOcr(result.data.text);
-      }
     }
     if (recognized.length) {
       mergeDraft(recognized);
