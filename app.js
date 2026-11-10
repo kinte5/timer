@@ -401,9 +401,9 @@ async function scanPhoto(file) {
     await worker.setParameters({ tessedit_pageseg_mode: "11" });
     result = await worker.recognize(boardImage);
     recognized = mergeOcrReadings(recognized, parseOcr(result.data.text));
-    if (!recognized.length && boardImage !== file) {
+    if (recognized.length < 5 && boardImage !== file) {
       result = await worker.recognize(file);
-      recognized = parseOcr(result.data.text);
+      recognized = mergeOcrReadings(recognized, parseOcr(result.data.text));
     }
     if (recognized.length) {
       mergeDraft(recognized);
