@@ -255,6 +255,8 @@ function updateSaveButton() {
 
 function normalizeText(text) {
   return text.toLocaleLowerCase("es").normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\bt[o0]rno\b/g, "torno")
+    .replace(/\b(torno|fresadora|cnc)\s*[il|](?=\s|$|[^\w])/g, "$1 1")
     .replace(/[|]/g, " ").replace(/\b[ij](?=(?:dias?|horas?|min|seg)\b)/g, "")
     .replace(/\b([o])(?=\s*(?:dias|horas|min|seg|s\b))/g, "0");
 }
